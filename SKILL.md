@@ -46,6 +46,15 @@ Plans can be provided as:
 
 For each plan, generate a `slug` (lowercase, hyphens, max 40 chars) from the plan title.
 
+### Plan Size Validation
+
+Before adding a plan to the queue, validate its size:
+- **< 20,000 characters (~5K tokens):** ✅ Normal — proceed
+- **20,000 - 50,000 characters (~5K-12K tokens):** ⚠️ Warning — notify user: "Plan '<title>' is large (X chars). The coder agent may have limited context for codebase research. Consider splitting this plan."
+- **> 50,000 characters (~12K tokens):** ❌ Reject — tell user: "Plan '<title>' exceeds the 50K character limit (X chars). Please split it into smaller plans." Do NOT add to queue.
+
+Character count includes ALL plan content (markdown, code blocks, diagrams). Store the count in the plan's `char_count` field.
+
 ---
 
 ## 3. Main Orchestration Loop
@@ -256,7 +265,10 @@ When all plans have been processed (merged, escalated, or failed):
 ### Timer Discipline
 - Always set a 60-second safety timer via `schedule` after spawning or messaging a subagent
 - If the timer fires and no message has been received, check the subagent's status via `manage_subagents` → `list`
-- If the subagent appears stuck (no response after 3 timer cycles = 3 minutes), kill it and mark the plan as `"failed"` with reason `"subagent_timeout"`
+- If the subagent appears stuck (no response after N timer cycles), kill it and mark the plan as `"failed"` with reason `"subagent_timeout"`
+  - Default N = `config.timeout_cycles` (3 cycles = 3 minutes)
+  - If the plan has `timeout_minutes` set, use that instead: `timeout_minutes * 60 / config.poll_interval_seconds` cycles
+  - Example: A complex plan with `timeout_minutes: 15` and 60s polls = 15 cycles before timeout
 
 ### State Consistency
 - **Always update `plan_queue.json` BEFORE taking the next action.** This ensures recoverability if the orchestrator session is interrupted.
