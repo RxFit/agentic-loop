@@ -124,6 +124,6 @@ The orchestrator will replace these variables when spawning you:
 | `{{REPO_OWNER}}` | GitHub repo owner |
 | `{{REPO_NAME}}` | GitHub repo name |
 | `{{BASE_BRANCH}}` | Branch to create PR against (usually `main`) |
-| `{{BRANCH_NAME}}` | Feature branch name (`agentic-loop/<slug>`) |
+| `{{BRANCH_NAME}}` | Feature branch name (`agentic-loop/<id>-<slug>`) |
 | `{{ORCHESTRATOR_ID}}` | Conversation ID of the orchestrator to send messages to |
 | `{{PLAN_TITLE}}` | Human-readable plan title |

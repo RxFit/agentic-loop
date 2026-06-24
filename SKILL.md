@@ -54,13 +54,13 @@ Execute the following protocol **sequentially** for each plan in the queue:
 
 ### Phase 1: Spawn Coder
 
-1. Update `plan_queue.json`: Set current plan's `status` → `"coding"`, `started_at` → now
+1. Update `plan_queue.json`: Set current plan's `status` → `"coding"`, `started_at` → now, `updated_at` → now
 2. Read the coder system prompt template from `resources/coder_prompt.md`
 3. Construct the coder's prompt by injecting:
    - The plan content (full markdown)
    - The target repo (`repo` field from state)
    - The base branch (`base_branch` field from state)
-   - The branch name: `agentic-loop/<plan-slug>`
+   - The branch name: `agentic-loop/<plan-id>-<plan-slug>`
 4. Spawn the coder subagent:
 
 ```
@@ -98,7 +98,7 @@ schedule:
 
 ### Phase 2: Spawn Reviewer
 
-1. Update `plan_queue.json`: Set `status` → `"pr_open"`, store `pr_url` and `pr_number`
+1. Update `plan_queue.json`: Set `status` → `"pr_open"`, store `pr_url` and `pr_number`, `updated_at` → now
 2. Read the reviewer system prompt template from `resources/reviewer_prompt.md`
 3. Construct the reviewer's prompt by injecting:
    - The PR URL
@@ -116,7 +116,7 @@ invoke_subagent:
 ```
 
 5. Store the `reviewer_conversation_id` in the plan's state
-6. Update `plan_queue.json`: Set `status` → `"reviewing"`
+6. Update `plan_queue.json`: Set `status` → `"reviewing"`, `updated_at` → now
 7. Set a 60-second safety timer
 8. **Wait** for the reviewer to send a message with the verdict
 
@@ -139,7 +139,7 @@ or
 - If ambiguous, ask the reviewer: "Please confirm your verdict: APPROVE or REQUEST_CHANGES?"
 
 **If verdict is APPROVED:**
-1. Update `plan_queue.json`: Set `status` → `"approved"`
+1. Update `plan_queue.json`: Set `status` → `"approved"`, `updated_at` → now
 2. Merge the PR:
 
 ```
@@ -149,14 +149,26 @@ call_mcp_tool:
   Arguments: { owner: "<owner>", repo: "<repo>", pullNumber: <pr_number> }
 ```
 
-3. Update `plan_queue.json`: Set `status` → `"merged"`, `completed_at` → now, increment `completed_count`
-4. **Advance** to the next plan (back to Phase 1)
+3. **Verify the merge succeeded** by reading the PR status:
+
+```
+call_mcp_tool:
+  ServerName: "github-mcp-server"
+  ToolName: "pull_request_read"
+  Arguments: { method: "get", owner: "<owner>", repo: "<repo>", pullNumber: <pr_number> }
+```
+
+   - If PR status shows `merged: true` → proceed to step 4
+   - If PR status shows `merged: false` → retry merge once. If still false, mark as `"escalated"` with reason `"merge_verification_failed"`, `updated_at` → now
+
+4. Update `plan_queue.json`: Set `status` → `"merged"`, `completed_at` → now, `updated_at` → now, increment `completed_count`
+5. **Advance** to the next plan (back to Phase 1)
 
 **If verdict is REQUEST_CHANGES:**
-1. Increment `review_iterations` in `plan_queue.json`
+1. Increment `review_iterations` in `plan_queue.json`, `updated_at` → now
 2. Check iteration count:
    - **If `review_iterations` < 5:**
-     - Update `status` → `"review_iteration_<N>"`
+     - Update `status` → `"review_iteration_<N>"`, `updated_at` → now
      - Extract review comments from the reviewer's message
      - Store comments in `review_comments` array
      - Send the comments to the coder subagent:
@@ -181,7 +193,7 @@ call_mcp_tool:
      - **Loop back** to the top of Phase 3
 
    - **If `review_iterations` >= 5:**
-     - Update `status` → `"escalated"`
+     - Update `status` → `"escalated"`, `updated_at` → now
      - Set `escalation_reason` to a summary of unresolved comments
      - Increment `escalated_count`
      - Generate an escalation artifact:
