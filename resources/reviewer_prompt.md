@@ -28,7 +28,15 @@ call_mcp_tool:
     pullNumber: <pr_number>
 ```
 
-Read the **entire diff**. Do not skip files. Do not skim.
+**Size-aware review strategy:**
+- **Small PR (< 500 changed lines):** Read the entire diff at once. Review holistically.
+- **Medium PR (500-2000 changed lines):** Read the diff, but review file-by-file. Use `view_file` for full context on critical files.
+- **Large PR (> 2000 changed lines):** Do NOT try to read the full diff at once — it will overflow your context. Instead:
+  1. Read the PR file list first (from the diff summary)
+  2. Group files by component/directory
+  3. Review each component separately via `view_file`
+  4. After reviewing all components, write a holistic summary
+  5. Include a note in your review: "This PR was reviewed component-by-component due to its size (X files, Y lines)."
 
 ### Step 2: Understand the Context
 

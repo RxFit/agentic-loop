@@ -30,7 +30,9 @@ Where `<artifact_dir>` is the orchestrator's brain directory:
     "max_review_iterations": 5,
     "poll_interval_seconds": 60,
     "timeout_cycles": 3,
-    "sequential": true
+    "sequential": true,
+    "max_plan_chars": 50000,
+    "warn_plan_chars": 20000
   },
   "plans": [
     {
@@ -51,7 +53,9 @@ Where `<artifact_dir>` is the orchestrator's brain directory:
       "completed_at": null,
       "escalation_reason": null,
       "failure_reason": null,
-      "review_comments": []
+      "review_comments": [],
+      "timeout_minutes": null,
+      "char_count": 1500
     }
   ],
   "current_plan_index": 0,
@@ -89,6 +93,8 @@ Where `<artifact_dir>` is the orchestrator's brain directory:
 | `poll_interval_seconds` | `number` | `60` | Safety timer interval in seconds. |
 | `timeout_cycles` | `number` | `3` | Number of timer cycles without response before a subagent is considered stuck. |
 | `sequential` | `boolean` | `true` | If true, execute plans one at a time. |
+| `max_plan_chars` | `number` | `50000` | Maximum allowed character count for a single plan. |
+| `warn_plan_chars` | `number` | `20000` | Character count threshold for size warnings. |
 
 ### Plan Fields
 
@@ -112,6 +118,8 @@ Where `<artifact_dir>` is the orchestrator's brain directory:
 | `escalation_reason` | `string\|null` | Why the plan was escalated (if status is `"escalated"`). |
 | `failure_reason` | `string\|null` | Why the plan failed (if status is `"failed"`). |
 | `review_comments` | `array` | Array of review comment objects from all iterations. |
+| `timeout_minutes` | `number\|null` | Optional per-plan timeout override. Default: uses `config.timeout_cycles * config.poll_interval_seconds / 60`. |
+| `char_count` | `number` | Character count of plan content. Set at ingestion. |
 
 ---
 
@@ -176,7 +184,9 @@ pending → coding → pr_open → reviewing → approved → merged
     "max_review_iterations": 5,
     "poll_interval_seconds": 60,
     "timeout_cycles": 3,
-    "sequential": true
+    "sequential": true,
+    "max_plan_chars": 50000,
+    "warn_plan_chars": 20000
   },
   "plans": [
     {
@@ -197,7 +207,9 @@ pending → coding → pr_open → reviewing → approved → merged
       "completed_at": null,
       "escalation_reason": null,
       "failure_reason": null,
-      "review_comments": []
+      "review_comments": [],
+      "timeout_minutes": null,
+      "char_count": 1500
     },
     {
       "id": 2,
@@ -217,7 +229,9 @@ pending → coding → pr_open → reviewing → approved → merged
       "completed_at": null,
       "escalation_reason": null,
       "failure_reason": null,
-      "review_comments": []
+      "review_comments": [],
+      "timeout_minutes": null,
+      "char_count": 2200
     }
   ],
   "current_plan_index": 0,
