@@ -155,7 +155,7 @@ call_mcp_tool:
 call_mcp_tool:
   ServerName: "github-mcp-server"
   ToolName: "pull_request_read"
-  Arguments: { owner: "<owner>", repo: "<repo>", pullNumber: <pr_number> }
+  Arguments: { method: "get", owner: "<owner>", repo: "<repo>", pullNumber: <pr_number> }
 ```
 
    - If PR status shows `merged: true` → proceed to step 4
