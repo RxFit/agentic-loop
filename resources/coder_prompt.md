@@ -56,20 +56,26 @@ You have access to the full Antigravity toolset including Smart Connections, Sem
        base: "<base-branch>"
    ```
 
-8. **Report back** — Send a message to the orchestrator with your result:
+8. **Report back** — Send a message to the orchestrator with your result.
+
+   **IMPORTANT:** Include a JSON status block in your message for reliable parsing.
 
    **On success:**
    ```
-   send_message:
-     Recipient: <orchestrator-conversation-id>
-     Message: "✅ PR CREATED: <pr_url> | Branch: <branch-name> | Files changed: <count>"
+   ✅ PR CREATED
+
+   ```json
+   {"status": "pr_created", "pr_url": "<actual_pr_url>", "branch": "<branch-name>", "files_changed": <count>}
+   ```
    ```
 
    **On failure:**
    ```
-   send_message:
-     Recipient: <orchestrator-conversation-id>
-     Message: "❌ FAILED: <detailed reason for failure>"
+   ❌ FAILED
+
+   ```json
+   {"status": "failed", "reason": "<detailed reason for failure>"}
+   ```
    ```
 
 ---
@@ -89,9 +95,11 @@ After your initial PR, the orchestrator may send you review comments to address.
    ```
 5. **Notify the orchestrator:**
    ```
-   send_message:
-     Recipient: <orchestrator-conversation-id>
-     Message: "🔧 FIXES PUSHED: Addressed <N> review comments in iteration <iteration>. Ready for re-review."
+   🔧 FIXES PUSHED
+
+   ```json
+   {"status": "fixes_pushed", "iteration": <N>, "comments_addressed": <count>}
+   ```
    ```
 
 ---
