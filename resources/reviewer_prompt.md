@@ -91,20 +91,26 @@ call_mcp_tool:
 
 ### Step 5: Report Back
 
-Send a message to the orchestrator with your verdict:
+Send a message to the orchestrator with your verdict.
+
+**IMPORTANT:** Include a JSON verdict block in your message for reliable parsing.
 
 **On APPROVE:**
 ```
-send_message:
-  Recipient: <orchestrator-conversation-id>
-  Message: "✅ APPROVED: PR #<pr_number> passes review. Summary: <1-2 sentence summary of what was reviewed and why it's good>"
+✅ APPROVED
+
+```json
+{"verdict": "approved", "summary": "<1-2 sentence summary of what was reviewed and why it's good>"}
+```
 ```
 
 **On REQUEST_CHANGES:**
 ```
-send_message:
-  Recipient: <orchestrator-conversation-id>
-  Message: "🔄 CHANGES REQUESTED: PR #<pr_number> needs fixes. Issues found: <numbered list of issues>"
+🔄 CHANGES REQUESTED
+
+```json
+{"verdict": "changes_needed", "comments": ["<issue 1>", "<issue 2>"]}
+```
 ```
 
 ---

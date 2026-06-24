@@ -80,9 +80,21 @@ schedule:
   Prompt: "Check coder status for plan: <plan-title>"
 ```
 
-7. **Wait** for the coder to send a message. The coder will send one of:
-   - `✅ PR CREATED: <pr_url>` — Proceed to Phase 2
-   - `❌ FAILED: <reason>` — Mark plan as `"failed"`, skip to next plan
+7. **Wait** for the coder to send a message. Parse the message using this priority:
+
+   **Primary (structured):** Look for a JSON code block containing status:
+   ```json
+   {"status": "pr_created", "pr_url": "...", "branch": "...", "files_changed": N}
+   ```
+   or
+   ```json
+   {"status": "failed", "reason": "..."}
+   ```
+
+   **Fallback (fuzzy):** If no JSON block found, use pattern matching:
+   - Look for a GitHub PR URL pattern (`github.com/.*/pull/\d+`) → extract as PR URL → treat as success
+   - Look for failure keywords (`failed`, `error`, `could not`, `unable to`) → treat as failure
+   - If neither pattern matches after 2 message exchanges, ask the subagent explicitly: "Please confirm: did you successfully create a PR? Reply with the PR URL or explain what failed."
 
 ### Phase 2: Spawn Reviewer
 
@@ -110,7 +122,21 @@ invoke_subagent:
 
 ### Phase 3: Review Loop (Max 5 Iterations)
 
-When the reviewer sends a message:
+When the reviewer sends a message, parse the verdict using this priority:
+
+**Primary (structured):** Look for a JSON code block:
+```json
+{"verdict": "approved", "summary": "..."}
+```
+or
+```json
+{"verdict": "changes_needed", "comments": ["...", "..."]}
+```
+
+**Fallback (fuzzy):**
+- Look for approval keywords: `approved`, `approve`, `LGTM`, `looks good` → treat as APPROVED
+- Look for rejection keywords: `changes requested`, `request changes`, `needs fixes`, `issues found` → treat as REQUEST_CHANGES
+- If ambiguous, ask the reviewer: "Please confirm your verdict: APPROVE or REQUEST_CHANGES?"
 
 **If verdict is APPROVED:**
 1. Update `plan_queue.json`: Set `status` → `"approved"`
